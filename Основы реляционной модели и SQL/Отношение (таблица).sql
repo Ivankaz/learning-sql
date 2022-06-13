@@ -1,4 +1,4 @@
-# создаю таблицу
+-- создаю таблицу
 CREATE TABLE book(
     book_id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(50),
@@ -7,12 +7,12 @@ CREATE TABLE book(
     amount INT
 );
 
-# вставляю запись в таблицу
+-- вставляю запись в таблицу
 INSERT INTO book(title, author, price, amount)
 VALUES ('Мастер и Маргарита', 'Булгаков М.А.', 670.99, 3);
 SELECT * FROM book;
 
-# вставляю несколько записей в таблицу
+-- вставляю несколько записей в таблицу
 INSERT INTO book(title, author, price, amount)
 VALUES ('Белая гвардия', 'Булгаков М.А.', 540.50, 5);
 INSERT INTO book(title, author, price, amount)
