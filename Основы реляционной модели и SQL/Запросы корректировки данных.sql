@@ -51,3 +51,42 @@ SET buy = IF(buy > amount, amount, buy),
 -- то уменьшаю цену на 10%
     price = IF(buy = 0, price * 0.9, price);
 -- SELECT * FROM book;
+
+-- обновляю таблицу book
+UPDATE book, supply
+-- количество экземпляров книги в таблице book суммирую с количеством на складе (supply)
+SET book.amount = book.amount + supply.amount,
+-- устанавливаю для книг среднюю цену между ценой из таблиц book и supply
+    book.price = (book.price + supply.price) / 2
+-- отбираю только те книги, которые есть и в book, и в supply
+WHERE book.title = supply.title AND book.author = supply.author;
+-- SELECT * FROM book;
+
+-- удаляю записи о книгах из таблицы supply,
+-- авторы которых имеют общее количество экземпляров больше 10
+DELETE FROM supply
+WHERE author IN (
+    -- вложенный запрос, которым я отбираю авторов,
+    -- у которых общее количество экземпляров книг больше 10
+    SELECT author
+    FROM book
+    GROUP BY author
+    HAVING SUM(amount) > 10
+);
+-- SELECT * FROM supply;
+
+-- создаю таблицу ordering со значениями из таблицы book
+CREATE TABLE ordering AS
+SELECT author, title, (
+    -- вложенный запрос, с помощью которого я получаю среднее количество экземпляров книг в таблице book
+    SELECT ROUND(AVG(amount))
+    FROM book
+    ) AS amount
+FROM book
+-- оставляю только те книги, количество которых меньше среднего
+WHERE amount < (
+    -- вложенный запрос, с помощью которого я получаю среднее количество экземпляров книг в таблице book
+    SELECT AVG(amount)
+    FROM book
+);
+-- SELECT * FROM ordering;
