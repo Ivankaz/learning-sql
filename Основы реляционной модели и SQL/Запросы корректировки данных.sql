@@ -90,3 +90,55 @@ WHERE amount < (
     FROM book
 );
 -- SELECT * FROM ordering;
+
+/* Задача:
+1. Создать новую таблицу all_books, в которую добавить все книги из таблиц book и supply. Для повторяющихся книг цену устанавливать наибольшую, количество складывать.
+2. Создать новую таблицу ordering и добавить в неё книги из таблицы all_books, количество которых меньше 10. Новая таблица должна иметь столбцы ordering_id (первичный ключ), title, author, price, need_to_order. В столбце need_to_order вычислить разницу между суммарным количеством экземпляров книги и 10, т.е. какое количество книг нужно заказать, чтобы оно стало равно 10. Вывести таблицу ordering.
+*/
+
+-- создаю таблицу all_books и добавляю в неё все записи о книгах из таблицы book
+CREATE TABLE all_books(
+    all_books_id INT PRIMARY KEY AUTO_INCREMENT
+) AS
+SELECT title, author, price, amount
+FROM book;
+-- SELECT * FROM all_books;
+
+-- обновляю количество и цены у книг, которые есть и в таблице all_books, и в таблице supply
+UPDATE all_books, supply
+-- количество экземпляров складываю
+SET all_books.amount = all_books.amount + supply.amount,
+-- цену книги выбираю максимальную с помощью функции GREATEST
+    all_books.price = GREATEST(all_books.price, supply.price)
+-- применяю обновление только для тех книг, которые есть в обоих таблицах
+WHERE all_books.title = supply.title AND all_books.author = supply.author;
+-- SELECT * FROM all_books;
+
+-- вставляю в таблицу all_books книги из таблицы supply,
+-- которых нет в таблице all_books
+INSERT INTO all_books(title, author, price, amount)
+SELECT title, author, price, amount
+FROM supply
+WHERE title NOT IN (
+    -- вложенный запрос, который выбирает все книги из таблицы all_books
+    SELECT title
+    FROM all_books
+    ) OR author NOT IN (
+    -- вложенный запрос, который выбирает все книги из таблицы all_books
+    SELECT author
+    FROM all_books
+    );
+-- SELECT * FROM all_books;
+
+-- создаю новую таблицу ordering (книги, которые нужно заказать)
+CREATE TABLE ordering(
+    ordering_id INT PRIMARY KEY AUTO_INCREMENT,
+    need_to_order INT
+) AS
+-- в поле need_to_order вычисляю количество книг, которое нужно докупить,
+-- чтобы в наличии магазина было минимум 10 экземпляров
+SELECT title, author, price, (10 - amount) AS need_to_order
+FROM all_books
+-- оставляю только те книги, количество которых меньше 10
+WHERE amount < 10;
+SELECT * FROM ordering;
