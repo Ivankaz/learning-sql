@@ -26,3 +26,14 @@ SET f.sum_fine = tv.sum_fine
 -- для тех штрафов, для которых ещё не установили сумму
 WHERE f.sum_fine IS NULL AND f.violation = tv.violation;
 -- SELECT * FROM fine;
+
+-- выбираю тех водителей, которые на одной и той же машине
+-- нарушили одно и то же правило 2 и более раз
+SELECT name, number_plate, violation
+FROM fine
+-- группирую записи, у которых совпадают все три столбца
+GROUP BY name, number_plate, violation
+-- в строках групп оставляю только те, количество которых равно 2 или больше
+HAVING COUNT(*) >= 2
+-- сортирую в алфавитном порядке по трём столбцам
+ORDER BY name, number_plate, violation;
