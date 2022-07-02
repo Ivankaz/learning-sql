@@ -18,3 +18,27 @@ FROM genre LEFT JOIN book
      ON genre.genre_id = book.genre_id
 -- оставляю только те жанры, для которых не нашлось книг в таблице book
 WHERE title IS NULL;
+
+-- выбираю таблицу с датами выставок для каждого города и автора
+SELECT name_city, name_author,
+       -- генерирую случайную дату в 2020 году
+       -- RAND() - возвращает случайное вещественное число от 0 до 1
+       -- FLOOR() - возвращает целую часть числа
+       -- DATE_ADD('YYYY-MM-DD', INTERVAL [число] [ед. измерения]) - прибавляет к дате число дней/недель/месяцев/лет
+       DATE_ADD('2020-01-01', INTERVAL FLOOR(RAND() * 365) DAY) AS Дата
+-- с помощью CROSS JOIN (перекрестное соединение
+-- для каждой записи из таблицы city выбираю записи из author
+FROM city CROSS JOIN author
+-- сортирую записи сначала по городу по алфавиту, потом по убыванию даты выставки
+ORDER BY name_city ASC, Дата DESC;
+
+-- выбираю жанр, название и автора книги из нескольких таблиц
+SELECT name_genre, title, name_author
+-- объединяю 3 таблицы между собой с помощью последовательных INNER JOIN
+FROM genre
+     INNER JOIN book ON genre.genre_id = book.genre_id
+     INNER JOIN author ON book.author_id = author.author_id
+-- оставляю только те книги, жанр которых включает слово "роман"
+WHERE name_genre LIKE '%роман%'
+-- сортирую книги по алфавиту
+ORDER BY title ASC;
