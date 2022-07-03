@@ -42,3 +42,31 @@ FROM genre
 WHERE name_genre LIKE '%роман%'
 -- сортирую книги по алфавиту
 ORDER BY title ASC;
+
+-- подсчитываю количество экземпляров книг для каждого автора
+SELECT name_author,
+       SUM(amount) AS Количество
+-- объединяю таблицу author с таблицей book так,
+-- чтобы при отсутствии соответствующей записи в таблице book
+-- автор все равно выводился, а недостающие поля принимали значение NULL
+FROM author LEFT JOIN book
+     ON author.author_id = book.author_id
+GROUP BY name_author
+-- вывожу только тех авторов, у которых меньше 10 экземпляров книг или их нет совсем
+-- P.S. вместо 'COUNT(title) = 0' логичнее было бы написать 'Количество IS NULL'
+HAVING Количество < 10 OR COUNT(title) = 0
+-- сортирую по возрастанию количества экземпляров
+ORDER BY Количество ASC;
+
+-- получаю имена авторов, которые пишут только в 1 жанре
+SELECT name_author
+FROM author
+WHERE author_id IN (
+    -- получаю ID авторов, которые пишут только в 1 жанре
+    SELECT author_id
+    FROM book
+    GROUP BY author_id
+    -- DISTINCT() - оставляет только уникальные значения genre_id
+    -- COUNT() - подсчитывает их количество
+    HAVING COUNT(DISTINCT(genre_id)) = 1
+    );
