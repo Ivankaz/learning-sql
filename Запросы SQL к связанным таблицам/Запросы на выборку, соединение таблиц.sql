@@ -70,3 +70,55 @@ WHERE author_id IN (
     -- COUNT() - подсчитывает их количество
     HAVING COUNT(DISTINCT(genre_id)) = 1
     );
+
+-- выбираю книги в самом популярном жанре
+SELECT title, name_author, name_genre, price, amount
+FROM (
+    -- вложенный запрос, с помощью которого я получаю количество экземпляров книг в самом популярном жанре
+    SELECT genre_id,
+           SUM(amount) AS max_amount
+    FROM book
+    GROUP BY genre_id
+    ORDER BY max_amount DESC
+    LIMIT 1
+    ) query_in_1
+    INNER JOIN (
+    -- вложенный запрос, в котором я подсчитываю количество экземпляров книг в каждом жанре
+    SELECT genre_id,
+           SUM(amount) AS max_amount
+    FROM book
+    GROUP BY genre_id
+    ) query_in_2
+    -- с помощью объединения двух вложенных запросов через INNER JOIN по полю max_amount
+    -- получаю жанры с максимальным количеством экземпляров книг
+    ON query_in_1.max_amount = query_in_2.max_amount
+    -- к самым популярным жанрам присоединяю информацию из других таблиц
+    INNER JOIN book
+    ON query_in_2.genre_id = book.genre_id
+    INNER JOIN genre
+    ON book.genre_id = genre.genre_id
+    INNER JOIN author
+    ON book.author_id = author.author_id
+-- сортирую книги по алфавиту
+ORDER BY title ASC;
+
+-- выбираю книги, которые и в таблице supply, и в таблице book имеют одинаковые цены
+SELECT title AS Название,
+       name_author AS Автор,
+       -- подсчитываю суммарное количество экземпляров книг в магазине и на складе
+       (supply.amount + book.amount) AS Количество
+-- использую USING() для объединения таблиц по полю с одинаковым названием
+FROM supply INNER JOIN book USING(title, price)
+     INNER JOIN author USING(author_id);
+
+-- вывести всех авторов, которые написали 2 и более книг
+SELECT name_author AS Автор,
+       COUNT(title) AS Количество_книг,
+       -- с помощью GROUP_CONCAT объединяю значения столбца в одну строку
+       GROUP_CONCAT(DISTINCT(name_genre) SEPARATOR ', ') AS Жанры
+-- использую LEFT_JOIN, чтобы не потярять авторов, которые не представлены в таблице book
+FROM author LEFT JOIN book USING(author_id)
+     LEFT JOIN genre USING(genre_id)
+GROUP BY name_author
+-- сортирую авторов по алфавиту
+ORDER BY name_author;
