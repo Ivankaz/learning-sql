@@ -39,3 +39,50 @@ FROM supply INNER JOIN author
 WHERE amount <> 0;
 
 -- SELECT * FROM book;
+
+-- указываю жанр для книги Лермонтова "Стихотворения и поэмы"
+UPDATE book
+SET genre_id = (
+    -- получаю ID жанра из таблицы genre
+    SELECT genre_id
+    FROM genre
+    WHERE name_genre = 'Поэзия'
+    )
+WHERE title = 'Стихотворения и поэмы'
+      AND author_id IN (
+          -- получаю ID автора из таблицы author
+          SELECT author_id
+          FROM author
+          WHERE name_author LIKE 'Лермонтов%'
+      );
+
+-- указываю жанр для книги Стивенсона "Остров сокровищ"
+UPDATE book
+SET genre_id = (
+    -- получаю ID жанра из таблицы genre
+    SELECT genre_id
+    FROM genre
+    WHERE name_genre = 'Приключения'
+    )
+WHERE title = 'Остров сокровищ'
+      AND author_id IN (
+          -- получаю ID автора из таблицы author
+          SELECT author_id
+          FROM author
+          WHERE name_author LIKE 'Стивенсон%'
+      );
+
+-- SELECT * FROM book;
+
+-- удаляю всех авторов и все их книги, общее количество книг которых меньше 20
+DELETE FROM author
+WHERE author_id IN (
+    -- выбираю ID авторов, количество книг которых меньше 20
+    SELECT author_id
+    FROM book
+    GROUP BY author_id
+    HAVING SUM(amount) < 20
+    );
+
+-- SELECT * FROM author;
+-- SELECT * FROM book;
