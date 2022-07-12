@@ -20,3 +20,36 @@ FROM buy_book
 GROUP BY book_id
 -- сортирую по автору и названию книги
 ORDER BY name_author, title;
+
+-- выбираю города, в которых живут клиенты, которые совершали заказы
+SELECT name_city,
+       -- подсчитываю количество заказов для каждого города
+       COUNT(*) AS Количество
+-- объединяю таблицы с помощью внутреннего соединения
+FROM city
+     INNER JOIN client USING(city_id)
+     INNER JOIN buy USING(client_id)
+GROUP BY name_city
+-- сортирую сначала по убыванию количества заказов,
+-- затем по городу в алфавитном порядке
+ORDER BY Количество DESC, name_city ASC;
+
+-- выбираю ID и дату оплаченных заказов
+SELECT buy_id, date_step_end
+FROM buy_step
+     INNER JOIN step USING(step_id)
+-- оставляю только те заказы, которые находятся на шаге "Оплата"
+-- и имеют дату окончания шага, т.е. заказ оплачен
+WHERE name_step = 'Оплата' AND
+      date_step_end IS NOT NULL;
+
+-- выбираю все заказы и подсчитываю их итоговую стоимость
+SELECT buy_id, name_client,
+       SUM(price * buy_book.amount) AS Стоимость
+FROM book
+     JOIN buy_book USING(book_id)
+     JOIN buy USING(buy_id)
+     JOIN client USING(client_id)
+GROUP BY buy_id
+-- сортирую по номеру заказа
+ORDER BY buy_id;
