@@ -53,3 +53,40 @@ FROM book
 GROUP BY buy_id
 -- сортирую по номеру заказа
 ORDER BY buy_id;
+
+-- выбираю ID заказов и их статус
+SELECT buy_id, name_step
+-- объединяю таблицы step (этапы) и buy_step (заказам по отношению к этапам)
+FROM step INNER JOIN buy_step USING(step_id)
+-- оставляю только те этапы, у которых есть дата начала, но нет даты конца
+WHERE date_step_beg IS NOT NULL AND
+      date_step_end IS NULL
+-- сортирую по ID заказа по возрастанию
+ORDER BY buy_id ASC;
+
+-- выбираю ID заказа,
+-- количество дней, которое он доставлялся,
+-- и разницу реального срока доставки с прогнозируемым сроком доставки (опоздание)
+SELECT buy_id,
+       DATEDIFF(date_step_end, date_step_beg) AS Количество_дней,
+       IF(DATEDIFF(date_step_end, date_step_beg) - days_delivery > 0, DATEDIFF(date_step_end, date_step_beg) - days_delivery, 0) AS Опоздание
+FROM city
+     INNER JOIN client USING(city_id)
+     INNER JOIN buy USING(client_id)
+     INNER JOIN buy_step USING(buy_id)
+     INNER JOIN step USING(step_id)
+-- оставляю только те заказы, которые прошли этап транспортировки
+WHERE name_step = 'Транспортировка' AND
+      date_step_end IS NOT NULL;
+
+-- выбираю всех клиентов, которые заказывали книги Достоевского
+SELECT DISTINCT name_client
+FROM author
+     JOIN book USING(author_id)
+     JOIN buy_book USING(book_id)
+     JOIN buy USING(buy_id)
+     JOIN client USING(client_id)
+-- оставляю только заказы книг Достоевского
+WHERE name_author LIKE '%Достоевский%'
+-- сортирую клиентов по возрастанию
+ORDER BY name_client ASC;
