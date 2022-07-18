@@ -90,3 +90,23 @@ FROM author
 WHERE name_author LIKE '%Достоевский%'
 -- сортирую клиентов по возрастанию
 ORDER BY name_client ASC;
+
+-- выбираю жанры с максимальным количеством купленных экземпляров книг
+SELECT name_genre,
+       SUM(buy_book.amount) AS Количество
+FROM genre
+     INNER JOIN book USING(genre_id)
+     INNER JOIN buy_book USING(book_id)
+-- группирую купленные книги по жанру
+GROUP BY name_genre
+-- оставляю только те жанры, количество купленных книг которых совпадает с максимальным
+HAVING SUM(buy_book.amount) = (
+    -- с помощью вложенного запроса получаю максимальное купленное количество книг в одном жанре
+    SELECT SUM(buy_book.amount) AS max_count
+    FROM genre
+         INNER JOIN book USING(genre_id)
+         INNER JOIN buy_book USING(book_id)
+    GROUP BY name_genre
+    ORDER BY max_count DESC
+    LIMIT 1
+    );
