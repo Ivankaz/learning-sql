@@ -110,3 +110,62 @@ HAVING SUM(buy_book.amount) = (
     ORDER BY max_count DESC
     LIMIT 1
     );
+
+-- получаю выручку за 2020 год
+SELECT 2020 AS Год,
+       -- получаю название месяца из даты с помощью функции MONTHNAME
+       MONTHNAME(buy_step.date_step_end) AS Месяц,
+       -- подсчитываю суммарную стоимость всех проданных книг
+       SUM(price * buy_book.amount) AS Сумма
+-- объединяю таблицы внутренним соединением
+-- этапы + этапы заказов + заказанные книги + книги
+FROM step
+     INNER JOIN buy_step USING(step_id)
+     INNER JOIN buy_book USING(buy_id)
+     INNER JOIN book USING(book_id)
+-- оставляю только те заказы, которые оплатили
+WHERE name_step = 'Оплата' AND date_step_end IS NOT NULL
+-- группирую записи по месяцу
+GROUP BY Месяц
+-- объединяю выборки и оставляю только различающиеся строки
+UNION
+-- выбираю выручку за 2019 год
+SELECT 2019 AS Год,
+       MONTHNAME(date_payment) AS Месяц,
+       SUM(price * amount) AS Сумма
+FROM buy_archive
+GROUP BY Месяц
+-- сортирую записи в результирующей выборке (после UNION) по возрастанию месяца и года
+ORDER BY Месяц ASC, Год ASC;
+
+SELECT title,
+       SUM(Количество) AS Количество,
+       SUM(Сумма) AS Сумма
+-- вложенный запрос, в котором я получаю книги, проданные в текущем и предыдущем годах
+FROM (
+    -- для каждой отдельной книги вывожу количество и стоимость проданных экзепляров
+    -- за текущий год
+    SELECT title,
+           SUM(buy_book.amount) AS Количество,
+           SUM(buy_book.amount * price) AS Сумма
+    FROM book
+         JOIN buy_book USING(book_id)
+         JOIN buy_step USING(buy_id)
+         JOIN step USING(step_id)
+    -- выбираю книги, которые оплатили
+    WHERE name_step = "Оплата" AND date_step_end IS NOT NULL
+    GROUP BY title
+    -- объединяю все записи в одну выборку
+    UNION ALL
+    -- за прошлый год
+    SELECT title,
+           SUM(buy_archive.amount) AS Количество,
+           SUM(buy_archive.amount * buy_archive.price) AS Сумма
+    FROM book
+         JOIN buy_archive USING(book_id)
+    GROUP BY title
+    ) AS sold_books
+-- группирую записи из вложенного запроса по названию книги
+GROUP BY title
+-- сортирую книги по убыванию суммы, на которую их продали
+ORDER BY Сумма DESC;
