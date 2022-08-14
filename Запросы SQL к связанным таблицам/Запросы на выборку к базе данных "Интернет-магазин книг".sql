@@ -169,3 +169,14 @@ FROM (
 GROUP BY title
 -- сортирую книги по убыванию суммы, на которую их продали
 ORDER BY Сумма DESC;
+
+-- получаю книги, которые ни разу не купили
+SELECT title
+FROM book
+WHERE book_id NOT IN (
+    -- вложенный запрос, в котором я выбираю ID книг, которые купили
+    SELECT DISTINCT(book_id)
+    FROM buy_book
+    )
+-- сортирую книги по возрастанию
+ORDER BY title ASC;
